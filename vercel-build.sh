@@ -9,6 +9,11 @@ echo "Compiling Umbra Payroll Contract for Frontend..."
 mkdir -p preprod-deployment/contracts/src/managed/bboard
 compact compile contracts/umbra-payroll.compact preprod-deployment/contracts/src/managed/bboard
 
+echo "--- COMPACT GENERATED FILES ---"
+ls -la preprod-deployment/contracts/src/managed/bboard/contract/
+cat preprod-deployment/contracts/src/managed/bboard/contract/index.js || true
+echo "-------------------------------"
+
 echo "Copying WASM/Bincode assets to public directory for runtime fetching..."
 mkdir -p public/managed/bboard
 cp preprod-deployment/contracts/src/managed/bboard/*.bincode public/managed/bboard/ 2>/dev/null || true
