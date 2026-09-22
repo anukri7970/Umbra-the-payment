@@ -8,8 +8,5 @@ export default defineConfig({
   build: {
     target: "es2022",
     outDir: "dist",
-    rollupOptions: {
-      external: ["/managed/bboard/contract/index.js"],
-    },
   },
 });

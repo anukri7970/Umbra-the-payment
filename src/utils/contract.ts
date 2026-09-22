@@ -12,6 +12,7 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
+import { CompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/managed/bboard/contract/index.js";
 export type PoolSummary = {
   poolId: number;
   commitment: string;
@@ -186,19 +187,6 @@ async function getDeployedContract(walletProvider: any) {
   ] = await Promise.all([
     import("@midnight-ntwrk/midnight-js-contracts"),
   ]);
-
-  let CompiledUmbraPayrollContract: any = null;
-  try {
-    const contractPath = "/managed/bboard/contract/index.js";
-    const mod = await import(/* @vite-ignore */ contractPath);
-    CompiledUmbraPayrollContract = mod.CompiledUmbraPayrollContract;
-  } catch {}
-
-  if (!CompiledUmbraPayrollContract) {
-    throw new Error(
-      "Contract bindings not found. Run the deployment workflow first and set VITE_CONTRACT_ADDRESS."
-    );
-  }
 
   const providers = await getMidnightProviders(walletProvider);
 
