@@ -12,7 +12,8 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-import * as CompiledUmbraPayrollContract from "../../preprod-deployment/contracts/src/managed/bboard/contract/index.js";
+// @ts-ignore (module generated during build time by compact compiler)
+import { contract as CompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/managed/bboard/contract/index.js";
 
 export type PoolSummary = {
   poolId: number;
