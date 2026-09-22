@@ -9,10 +9,13 @@ echo "Compiling Umbra Payroll Contract for Frontend..."
 mkdir -p preprod-deployment/contracts/src/managed/bboard
 compact compile contracts/umbra-payroll.compact preprod-deployment/contracts/src/managed/bboard
 
-echo "Copying WASM/Bincode assets to public directory for runtime fetching..."
-mkdir -p public/managed/bboard
+echo "Copying compiled contract assets to public/ for runtime serving..."
+mkdir -p public/managed/bboard/contract
+# JS module — fetched at runtime via dynamic import
+cp preprod-deployment/contracts/src/managed/bboard/contract/index.js public/managed/bboard/contract/ 2>/dev/null || true
+# WASM / bincode — fetched by the ZK config provider
 cp preprod-deployment/contracts/src/managed/bboard/*.bincode public/managed/bboard/ 2>/dev/null || true
 cp preprod-deployment/contracts/src/managed/bboard/*.wasm public/managed/bboard/ 2>/dev/null || true
 
-echo "Building React App (skipping typecheck — generated files not resolvable by tsc before compile)..."
+echo "Building React App..."
 vite build

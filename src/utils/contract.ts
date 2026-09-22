@@ -12,8 +12,7 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-// CompiledUmbraPayrollContract is imported lazily inside getDeployedContract
-// so test files can import contract.ts without the compact-generated file present.
+
 
 export type PoolSummary = {
   poolId: number;
@@ -184,13 +183,13 @@ async function getMidnightProviders(walletProvider: any) {
 }
 
 async function getDeployedContract(walletProvider: any) {
-  const [
-    { findDeployedContract },
-    { CompiledUmbraPayrollContract },
-  ] = await Promise.all([
-    import("@midnight-ntwrk/midnight-js-contracts"),
-    import("../../preprod-deployment/contracts/src/index.js") as Promise<any>,
-  ]);
+  const { findDeployedContract } = await import("@midnight-ntwrk/midnight-js-contracts");
+
+  // Contract JS is compiled by `compact` and served as a static file from public/.
+  // Using @vite-ignore so Rollup does not attempt to resolve/bundle it at build time.
+  const { CompiledUmbraPayrollContract } = await import(
+    /* @vite-ignore */ "/managed/bboard/contract/index.js"
+  );
 
   const providers = await getMidnightProviders(walletProvider);
 
