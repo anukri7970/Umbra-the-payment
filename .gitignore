@@ -5,4 +5,5 @@ dist
 *.log
 managed/*
 !managed/.gitkeep
+!managed/**/*.d.ts
 .DS_Store
