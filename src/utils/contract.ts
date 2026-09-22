@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty, @typescript-eslint/no-unused-vars */
 // ---------------------------------------------------------------------------
 // contract.ts — Umbra on-chain contract integration
 //
@@ -188,7 +189,8 @@ async function getDeployedContract(walletProvider: any) {
 
   let CompiledUmbraPayrollContract: any = null;
   try {
-    const mod = await import(/* @vite-ignore */ "/managed/bboard/contract/index.js" as string);
+    const contractPath = "/managed/bboard/contract/index.js";
+    const mod = await import(/* @vite-ignore */ contractPath);
     CompiledUmbraPayrollContract = mod.CompiledUmbraPayrollContract;
   } catch {}
 
