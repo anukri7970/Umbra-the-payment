@@ -74,10 +74,15 @@ export circuit createPool(): Uint<64> {
   const count = recipientCountWitness();
   const salt = commitSalt();
 
-  let sum: Uint<64> = 0;
-  for (let i = 0; i < count; i = i + 1) {
-    sum = sum + shares[i];
-  }
+  const s0 = shares[0] + shares[1] + shares[2] + shares[3];
+  const s1 = shares[4] + shares[5] + shares[6] + shares[7];
+  const s2 = shares[8] + shares[9] + shares[10] + shares[11];
+  const s3 = shares[12] + shares[13] + shares[14] + shares[15];
+  const s4 = shares[16] + shares[17] + shares[18] + shares[19];
+  const s5 = shares[20] + shares[21] + shares[22] + shares[23];
+  const s6 = shares[24] + shares[25] + shares[26] + shares[27];
+  const s7 = shares[28] + shares[29] + shares[30] + shares[31];
+  const sum = s0 + s1 + s2 + s3 + s4 + s5 + s6 + s7;
   assert(sum == total, "recipient shares must sum exactly to the pool total");
 
   const commitment = persistentHash<Bytes<32>>(
