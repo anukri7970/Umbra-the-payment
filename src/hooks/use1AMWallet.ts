@@ -182,7 +182,9 @@ export function use1AMWallet() {
       setStatus("connected");
       persistSession(addr, pubKey);
     } catch (err) {
+      console.error("Wallet connection failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to connect 1AM wallet";
+      window.alert("Connection Error: " + msg);
       setError(msg);
       setStatus("error");
       clearSession();
