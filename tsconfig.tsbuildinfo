@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/layout.tsx","./src/components/payrollsplit.tsx","./src/components/txlink.tsx","./src/components/walletconnect.tsx","./src/hooks/use1amwallet.ts","./src/hooks/usemidnight.ts","./src/utils/contract.ts"],"version":"5.9.3"}

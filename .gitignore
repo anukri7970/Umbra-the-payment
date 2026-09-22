@@ -6,4 +6,5 @@ dist
 managed/*
 !managed/.gitkeep
 !managed/**/*.d.ts
+!managed/**/contract/index.js
 .DS_Store
