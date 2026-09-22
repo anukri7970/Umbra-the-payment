@@ -119,8 +119,8 @@ export circuit claimPayout(poolId: Uint<64>): [] {
   const salt = claimSalt();
   const sk = callerSecretKey();
 
-  const claimedSoFar = poolClaimedCount.lookup(poolId);
-  const totalRecipients = poolRecipientCount.lookup(poolId);
+  const claimedSoFar = poolClaimedCount.lookup(disclose(poolId));
+  const totalRecipients = poolRecipientCount.lookup(disclose(poolId));
   assert(claimedSoFar < totalRecipients, "all shares for this pool are already claimed");
 
   const nullifier = persistentHash<ClaimNullifier>(ClaimNullifier {
@@ -138,7 +138,7 @@ export circuit claimPayout(poolId: Uint<64>): [] {
 // Public, read-only helper: is this pool fully settled? Anyone can audit
 // completion without learning a single recipient's compensation.
 export circuit isPoolSettled(poolId: Uint<64>): Boolean {
-  const claimed = poolClaimedCount.lookup(poolId);
-  const total = poolRecipientCount.lookup(poolId);
+  const claimed = poolClaimedCount.lookup(disclose(poolId));
+  const total = poolRecipientCount.lookup(disclose(poolId));
   return disclose(claimed == total);
 }

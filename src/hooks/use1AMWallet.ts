@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── 1AM Wallet types ────────────────────────────────────────────────────────
