@@ -14,7 +14,13 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "/managed/bboard/contract/index.js": [
+        "./preprod-deployment/contracts/src/managed/bboard/contract/index.d.ts"
+      ]
+    }
   },
   "include": ["src"]
 }

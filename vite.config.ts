@@ -8,5 +8,10 @@ export default defineConfig({
   build: {
     target: "es2022",
     outDir: "dist",
+    rollupOptions: {
+      // The compiled contract JS is served from public/ at runtime.
+      // Mark it external so Rollup does not try to bundle or resolve it.
+      external: ["/managed/bboard/contract/index.js"],
+    },
   },
 });
