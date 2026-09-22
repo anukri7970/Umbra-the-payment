@@ -173,7 +173,8 @@ export function use1AMWallet() {
       }
 
       if (!addr) {
-        throw new Error("Could not retrieve wallet address from 1AM wallet");
+        const keys = Object.keys(result || {}).join(", ");
+        throw new Error(`Could not retrieve wallet address from 1AM wallet. Returned keys: [${keys}]`);
       }
 
       setAddress(addr);
