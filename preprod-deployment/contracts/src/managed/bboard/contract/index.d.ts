@@ -7,4 +7,3 @@ export declare class Contract<T, W> {
 }
 
 export declare const contractConfig: unknown;
-export declare const witnesses: unknown;
