@@ -34,7 +34,7 @@ describe("createPool — mirrors the circuit's sum assertion", () => {
   it("rejects a pool whose shares do not sum to the declared total", async () => {
     await expect(
       createPool({ totalAmount: 1000, shares: [600, 300] }, "wallet:payer-b")
-    ).rejects.toThrow(/sum exactly/i);
+    ).rejects.toThrow(/sum to pool total/i);
   });
 
   it("never exposes the total or individual shares in the public summary", async () => {
