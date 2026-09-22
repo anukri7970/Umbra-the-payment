@@ -63,6 +63,19 @@ witness claimShareAmount(): Uint<64>;
 witness claimRecipientIndex(): Uint<32>;
 witness claimSalt(): Bytes<32>;
 
+struct PoolCommitment {
+  total: Uint<64>,
+  count: Uint<32>,
+  salt: Bytes<32>
+}
+
+struct ClaimNullifier {
+  poolId: Uint<64>,
+  index: Uint<32>,
+  pubKey: Bytes<32>,
+  salt: Bytes<32>
+}
+
 // ---- Circuits ---------------------------------------------------------------
 
 // Creates a new payroll pool. Proves the private share list sums to the
@@ -85,9 +98,11 @@ export circuit createPool(): Uint<64> {
   const sum = s0 + s1 + s2 + s3 + s4 + s5 + s6 + s7;
   assert(sum == total, "recipient shares must sum exactly to the pool total");
 
-  const commitment = persistentHash<Bytes<32>>(
-    pad(32, total) ++ pad(32, count) ++ salt
-  );
+  const commitment = persistentHash<PoolCommitment>(PoolCommitment {
+    total: total,
+    count: count,
+    salt: salt
+  });
 
   const poolId = poolCount.read();
   poolCommitment.insert(disclose(poolId), disclose(commitment));
@@ -112,9 +127,12 @@ export circuit claimPayout(poolId: Uint<64>): [] {
   const totalRecipients = poolRecipientCount.lookup(poolId);
   assert(claimedSoFar < totalRecipients, "all shares for this pool are already claimed");
 
-  const nullifier = persistentHash<Bytes<32>>(
-    pad(32, poolId) ++ pad(32, index) ++ publicKey(sk) ++ salt
-  );
+  const nullifier = persistentHash<ClaimNullifier>(ClaimNullifier {
+    poolId: poolId,
+    index: index,
+    pubKey: publicKey(sk),
+    salt: salt
+  });
   assert(!claimedNullifiers.member(disclose(nullifier)), "this share has already been claimed");
 
   claimedNullifiers.insert(disclose(nullifier), true);
