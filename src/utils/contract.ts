@@ -12,7 +12,8 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-import { CompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/index.js";
+// CompiledUmbraPayrollContract is imported lazily inside getDeployedContract
+// so test files can import contract.ts without the compact-generated file present.
 
 export type PoolSummary = {
   poolId: number;
@@ -185,8 +186,11 @@ async function getMidnightProviders(walletProvider: any) {
 async function getDeployedContract(walletProvider: any) {
   const [
     { findDeployedContract },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { CompiledUmbraPayrollContract },
   ] = await Promise.all([
     import("@midnight-ntwrk/midnight-js-contracts"),
+    import("../../preprod-deployment/contracts/src/index.js") as Promise<any>,
   ]);
 
   const providers = await getMidnightProviders(walletProvider);
