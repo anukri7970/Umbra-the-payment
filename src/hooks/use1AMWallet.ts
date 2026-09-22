@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── 1AM Wallet types ────────────────────────────────────────────────────────
@@ -102,7 +103,9 @@ export function use1AMWallet() {
       localStorage.setItem(LS_CONNECTED, "true");
       localStorage.setItem(LS_ADDRESS, addr);
       localStorage.setItem(LS_PUBKEY, pubKey);
-    } catch {}
+    } catch (e) {
+      // ignore
+    }
   }, []);
 
   const clearSession = useCallback(() => {
@@ -110,7 +113,9 @@ export function use1AMWallet() {
       localStorage.removeItem(LS_CONNECTED);
       localStorage.removeItem(LS_ADDRESS);
       localStorage.removeItem(LS_PUBKEY);
-    } catch {}
+    } catch (e) {
+      // ignore
+    }
   }, []);
 
   // ── connect ──────────────────────────────────────────────────────────────
