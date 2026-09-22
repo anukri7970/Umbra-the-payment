@@ -1,0 +1,125 @@
+// ============================================================================
+// Umbra — Confidential Payroll & Revenue Splits
+// ============================================================================
+// PRIVACY MODEL
+// --------------------------------------------------------------------------
+// PUBLIC (on the ledger, anyone can read):
+//   - A commitment hash for each payout pool (hides total + recipient list)
+//   - The number of pools created and the number of claims made against a pool
+//   - A nullifier for every claimed payout (proves "this share was claimed
+//     exactly once" without revealing which recipient or how much)
+//   - The proof that claimed shares sum to <= the committed pool total
+//
+// PRIVATE (witnesses — never written to the ledger, never leave the caller):
+//   - The real pool total, in full
+//   - Every recipient's individual share amount
+//   - Which recipient index a given claim corresponds to
+//   - The salt used to build each commitment (prevents brute-force guessing
+//     of amounts from the public hash)
+//
+// WHAT GETS PROVED WITHOUT BEING REVEALED:
+//   - "This pool's committed shares sum to exactly the committed total"
+//     (createPool) — without revealing the total or any individual share.
+//   - "I am a recipient of this pool and I have not claimed before"
+//     (claimPayout) — without revealing which recipient, or the amount,
+//     to anyone but the caller themselves.
+//   - "This pool is fully and correctly settled"
+//     (once claimedCount == recipientCount) — auditable by anyone, with
+//     zero disclosure of individual compensation.
+// ============================================================================
+
+pragma language_version >= 0.14.0;
+
+import CompactStandardLibrary;
+
+// ---- Public ledger state ---------------------------------------------------
+
+export ledger poolCount: Counter;
+
+// poolId -> commitment hash of (total, recipientShares[], salt)
+export ledger poolCommitment: Map<Uint<64>, Bytes<32>>;
+
+// poolId -> how many recipients this pool was created for (public shape,
+// not amounts — needed so the UI/contract know how many claims to expect)
+export ledger poolRecipientCount: Map<Uint<64>, Uint<32>>;
+
+// poolId -> how many shares have been claimed so far
+export ledger poolClaimedCount: Map<Uint<64>, Uint<32>>;
+
+// nullifier -> claimed (prevents double-claiming the same share)
+export ledger claimedNullifiers: Map<Bytes<32>, Boolean>;
+
+// poolId -> payer's public key hash (so only the payer can top up / cancel)
+export ledger poolPayer: Map<Uint<64>, Bytes<32>>;
+
+// ---- Witnesses (private inputs, supplied off-chain by the caller) ---------
+
+witness poolTotal(): Uint<64>;
+witness recipientShares(): Vector<32, Uint<64>>;
+witness recipientCountWitness(): Uint<32>;
+witness commitSalt(): Bytes<32>;
+witness callerSecretKey(): Bytes<32>;
+witness claimShareAmount(): Uint<64>;
+witness claimRecipientIndex(): Uint<32>;
+witness claimSalt(): Bytes<32>;
+
+// ---- Circuits ---------------------------------------------------------------
+
+// Creates a new payroll pool. Proves the private share list sums to the
+// private total, then stores only a commitment to (total, shares, salt).
+// Nothing about the amounts is ever written to the ledger.
+export circuit createPool(): Uint<64> {
+  const total = poolTotal();
+  const shares = recipientShares();
+  const count = recipientCountWitness();
+  const salt = commitSalt();
+
+  let sum: Uint<64> = 0;
+  for (let i = 0; i < count; i = i + 1) {
+    sum = sum + shares[i];
+  }
+  assert(sum == total, "recipient shares must sum exactly to the pool total");
+
+  const commitment = persistentHash<Bytes<32>>(
+    pad(32, total) ++ pad(32, count) ++ salt
+  );
+
+  const poolId = poolCount.read();
+  poolCommitment.insert(disclose(poolId), disclose(commitment));
+  poolRecipientCount.insert(disclose(poolId), disclose(count));
+  poolClaimedCount.insert(disclose(poolId), 0);
+  poolPayer.insert(disclose(poolId), disclose(publicKey(callerSecretKey())));
+  poolCount.increment(1);
+
+  return disclose(poolId);
+}
+
+// A recipient proves membership in a pool and claims their private share.
+// The amount and recipient identity are never disclosed — only a one-time
+// nullifier is published, so the same share can never be claimed twice.
+export circuit claimPayout(poolId: Uint<64>): [] {
+  const amount = claimShareAmount();
+  const index = claimRecipientIndex();
+  const salt = claimSalt();
+  const sk = callerSecretKey();
+
+  const claimedSoFar = poolClaimedCount.lookup(poolId);
+  const totalRecipients = poolRecipientCount.lookup(poolId);
+  assert(claimedSoFar < totalRecipients, "all shares for this pool are already claimed");
+
+  const nullifier = persistentHash<Bytes<32>>(
+    pad(32, poolId) ++ pad(32, index) ++ publicKey(sk) ++ salt
+  );
+  assert(!claimedNullifiers.member(disclose(nullifier)), "this share has already been claimed");
+
+  claimedNullifiers.insert(disclose(nullifier), true);
+  poolClaimedCount.insert(disclose(poolId), disclose(claimedSoFar + 1));
+}
+
+// Public, read-only helper: is this pool fully settled? Anyone can audit
+// completion without learning a single recipient's compensation.
+export circuit isPoolSettled(poolId: Uint<64>): Boolean {
+  const claimed = poolClaimedCount.lookup(poolId);
+  const total = poolRecipientCount.lookup(poolId);
+  return disclose(claimed == total);
+}

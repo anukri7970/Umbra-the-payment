@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink-900 text-parchment font-body antialiased;
+    background-image: radial-gradient(
+      circle at 15% -10%,
+      rgba(201, 162, 39, 0.08),
+      transparent 45%
+    );
+  }
+  ::selection {
+    @apply bg-brass-500/30 text-parchment;
+  }
+  :focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* A "redacted" ledger figure: shown as a solid bar until proved/revealed
+     to the person who owns it. This is the visual anchor of the whole app —
+     the one deliberate motif everything else stays quiet around. */
+  .redacted {
+    @apply relative inline-flex h-[1.1em] min-w-[4.5ch] items-center justify-center
+      rounded-[2px] bg-ink-600 font-mono text-transparent select-none;
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(237, 230, 216, 0.06) 0px,
+      rgba(237, 230, 216, 0.06) 2px,
+      transparent 2px,
+      transparent 7px
+    );
+  }
+
+  .ledger-divider {
+    background-image: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(201, 162, 39, 0.35) 15%,
+      rgba(201, 162, 39, 0.35) 85%,
+      transparent
+    );
+  }
+
+  .brass-ring {
+    box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.25);
+  }
+}
