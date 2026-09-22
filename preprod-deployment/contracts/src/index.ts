@@ -7,12 +7,12 @@ import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-j
 export * from "./managed/bboard/contract/index.js";
 export * from "./witnesses.js";
 
-import * as CompiledUmbraContract from "./managed/bboard/contract/index.js";
-import * as Witnesses from "./witnesses.js";
+import { Contract } from "./managed/bboard/contract/index.js";
+import { witnesses } from "./witnesses.js";
 
-class ContractWrapper extends CompiledUmbraContract.Contract<any, any> {
+class ContractWrapper extends Contract<any, any> {
   constructor() {
-    super(Witnesses.witnesses);
+    super(witnesses);
   }
 }
 
