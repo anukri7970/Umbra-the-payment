@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-empty, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 // ---------------------------------------------------------------------------
 // contract.ts — Umbra on-chain contract integration
 //
