@@ -186,7 +186,6 @@ async function getMidnightProviders(walletProvider: any) {
 async function getDeployedContract(walletProvider: any) {
   const [
     { findDeployedContract },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { CompiledUmbraPayrollContract },
   ] = await Promise.all([
     import("@midnight-ntwrk/midnight-js-contracts"),
