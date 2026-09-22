@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ---------------------------------------------------------------------------
 // contract.ts — Umbra on-chain contract integration
 //
@@ -12,7 +12,8 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-import { CompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/managed/bboard/contract/index.js";
+import * as CompiledUmbraPayrollContract from "../../preprod-deployment/contracts/src/managed/bboard/contract/index.js";
+
 export type PoolSummary = {
   poolId: number;
   commitment: string;
