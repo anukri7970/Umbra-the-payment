@@ -58,7 +58,7 @@ function discover1AMProvider(): InjectedWalletProvider | null {
   const direct = m["1am"] || m["oneam"] || m["1AM"];
   if (direct) return direct;
 
-  // Fallback: scan all keys for name containing "1am"
+  // Fallback 1: scan all keys for name containing "1am"
   for (const key of Object.keys(m)) {
     const entry = m[key];
     if (
@@ -68,6 +68,13 @@ function discover1AMProvider(): InjectedWalletProvider | null {
       return entry;
     }
   }
+
+  // Fallback 2: grab the first available Midnight wallet (e.g. Nightly, Lace, mnl)
+  const anyKey = Object.keys(m)[0];
+  if (anyKey && m[anyKey]) {
+    return m[anyKey];
+  }
+
   return null;
 }
 
