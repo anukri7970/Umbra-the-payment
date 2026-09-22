@@ -49,9 +49,6 @@ export ledger poolClaimedCount: Map<Uint<64>, Uint<32>>;
 // nullifier -> claimed (prevents double-claiming the same share)
 export ledger claimedNullifiers: Map<Bytes<32>, Boolean>;
 
-// poolId -> payer's public key hash (so only the payer can top up / cancel)
-export ledger poolPayer: Map<Uint<64>, Bytes<32>>;
-
 // ---- Witnesses (private inputs, supplied off-chain by the caller) ---------
 
 witness poolTotal(): Uint<64>;
@@ -72,7 +69,7 @@ struct PoolCommitment {
 struct ClaimNullifier {
   poolId: Uint<64>,
   index: Uint<32>,
-  pubKey: Bytes<32>,
+  sk: Bytes<32>,
   salt: Bytes<32>
 }
 
@@ -108,7 +105,6 @@ export circuit createPool(): Uint<64> {
   poolCommitment.insert(disclose(poolId), disclose(commitment));
   poolRecipientCount.insert(disclose(poolId), disclose(count));
   poolClaimedCount.insert(disclose(poolId), 0);
-  poolPayer.insert(disclose(poolId), disclose(publicKey(callerSecretKey())));
   poolCount.increment(1);
 
   return disclose(poolId);
@@ -130,7 +126,7 @@ export circuit claimPayout(poolId: Uint<64>): [] {
   const nullifier = persistentHash<ClaimNullifier>(ClaimNullifier {
     poolId: poolId,
     index: index,
-    pubKey: publicKey(sk),
+    sk: sk,
     salt: salt
   });
   assert(!claimedNullifiers.member(disclose(nullifier)), "this share has already been claimed");
