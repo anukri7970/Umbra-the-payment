@@ -132,7 +132,7 @@ export circuit claimPayout(poolId: Uint<64>): [] {
   assert(!claimedNullifiers.member(disclose(nullifier)), "this share has already been claimed");
 
   claimedNullifiers.insert(disclose(nullifier), true);
-  poolClaimedCount.insert(disclose(poolId), disclose(claimedSoFar + 1));
+  poolClaimedCount.insert(disclose(poolId), disclose((claimedSoFar + 1) as Uint<32>));
 }
 
 // Public, read-only helper: is this pool fully settled? Anyone can audit
