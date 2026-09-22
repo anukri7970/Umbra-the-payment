@@ -1,0 +1,15 @@
+{
+  "name": "@midnight-ntwrk/umbra-cli",
+  "version": "0.1.0",
+  "author": "anukri7970",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "npx tsx src/launcher/deploy-umbra.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0"
+  }
+}

@@ -1,78 +1,47 @@
 import { useCallback, useEffect, useState } from "react";
+import { use1AMWallet } from "./use1AMWallet";
 import {
   RUNTIME_MODE,
   type PoolSummary,
   createPool as createPoolCall,
   claimPayout as claimPayoutCall,
   listPools,
+  explorerTxUrl,
   type CreatePoolInput,
   type ClaimPayoutInput,
 } from "../utils/contract";
 
-// Minimal shape of the Lace wallet's injected Midnight API. The real
-// midnight-js SDK exposes a richer typed surface than this; this is the
-// slice Umbra actually touches. See:
-// https://docs.midnight.network — "Connect a DApp to Lace"
-type MidnightWalletApi = {
-  enable: () => Promise<{ address: string }>;
-  state: () => Promise<{ address: string }>;
-};
-
-declare global {
-  interface Window {
-    midnight?: { mnLace?: MidnightWalletApi };
-  }
-}
-
-export type WalletStatus = "disconnected" | "connecting" | "connected" | "error";
+export type { WalletStatus } from "./use1AMWallet";
 
 export function useMidnight() {
-  const [status, setStatus] = useState<WalletStatus>("disconnected");
-  const [address, setAddress] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const wallet = use1AMWallet();
   const [pools, setPools] = useState<PoolSummary[]>(() => listPools());
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastTxId, setLastTxId] = useState<string | null>(null);
+  const [lastExplorerUrl, setLastExplorerUrl] = useState<string | null>(null);
 
   const refreshPools = useCallback(() => {
     setPools(listPools());
   }, []);
 
-  const connect = useCallback(async () => {
-    setStatus("connecting");
-    setError(null);
-    try {
-      const lace = window.midnight?.mnLace;
-      if (!lace) {
-        // No Lace extension found — fall back to a stable demo identity so
-        // the flow stays fully clickable during review. Real funds/proofs
-        // are never touched in this path.
-        const demoAddress = "demo1qpq…umbra";
-        setAddress(demoAddress);
-        setStatus("connected");
-        return;
-      }
-      const { address: addr } = await lace.enable();
-      setAddress(addr);
-      setStatus("connected");
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Failed to connect wallet");
-    }
-  }, []);
-
-  const disconnect = useCallback(() => {
-    setAddress(null);
-    setStatus("disconnected");
-    setError(null);
-  }, []);
-
   const createPool = useCallback(
     async (input: CreatePoolInput) => {
-      if (!address) throw new Error("connect a wallet first");
+      if (wallet.status !== "connected") throw new Error("Connect your 1AM wallet first");
       setBusy(true);
       setError(null);
+      setLastTxId(null);
+      setLastExplorerUrl(null);
       try {
-        const summary = await createPoolCall(input, address);
+        const summary = await createPoolCall(
+          input,
+          wallet.address ?? wallet.coinPublicKey ?? "unknown",
+          wallet.walletApi?.provider
+        );
+        if (summary.txId) {
+          setLastTxId(summary.txId);
+          setLastExplorerUrl(summary.explorerUrl ?? explorerTxUrl(summary.txId));
+        }
         refreshPools();
         return summary;
       } catch (err) {
@@ -83,16 +52,26 @@ export function useMidnight() {
         setBusy(false);
       }
     },
-    [address, refreshPools]
+    [wallet, refreshPools]
   );
 
   const claimPayout = useCallback(
     async (input: ClaimPayoutInput) => {
-      if (!address) throw new Error("connect a wallet first");
+      if (wallet.status !== "connected") throw new Error("Connect your 1AM wallet first");
       setBusy(true);
       setError(null);
+      setLastTxId(null);
+      setLastExplorerUrl(null);
       try {
-        const summary = await claimPayoutCall(input, address);
+        const summary = await claimPayoutCall(
+          input,
+          wallet.address ?? wallet.coinPublicKey ?? "unknown",
+          wallet.walletApi?.provider
+        );
+        if (summary.txId) {
+          setLastTxId(summary.txId);
+          setLastExplorerUrl(summary.explorerUrl ?? explorerTxUrl(summary.txId));
+        }
         refreshPools();
         return summary;
       } catch (err) {
@@ -103,7 +82,7 @@ export function useMidnight() {
         setBusy(false);
       }
     },
-    [address, refreshPools]
+    [wallet, refreshPools]
   );
 
   useEffect(() => {
@@ -112,13 +91,18 @@ export function useMidnight() {
 
   return {
     mode: RUNTIME_MODE,
-    status,
-    address,
-    error,
+    status: wallet.status,
+    address: wallet.address,
+    coinPublicKey: wallet.coinPublicKey,
+    error: wallet.error ?? error,
     busy,
     pools,
-    connect,
-    disconnect,
+    showPopup: wallet.showPopup,
+    is1AMInstalled: wallet.is1AMInstalled,
+    lastTxId,
+    lastExplorerUrl,
+    connect: wallet.connect,
+    disconnect: wallet.disconnect,
     createPool,
     claimPayout,
   };

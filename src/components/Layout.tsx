@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { WalletStatus } from "../hooks/useMidnight";
+import type { WalletStatus } from "../hooks/use1AMWallet";
 import WalletConnect from "./WalletConnect";
 
 type Props = {
@@ -7,6 +7,8 @@ type Props = {
   mode: "local" | "network";
   status: WalletStatus;
   address: string | null;
+  is1AMInstalled: boolean;
+  showPopup: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
 };
@@ -25,6 +27,8 @@ export default function Layout({
   mode,
   status,
   address,
+  is1AMInstalled,
+  showPopup,
   onConnect,
   onDisconnect,
 }: Props) {
@@ -51,6 +55,8 @@ export default function Layout({
             <WalletConnect
               status={status}
               address={address}
+              is1AMInstalled={is1AMInstalled}
+              showPopup={showPopup}
               onConnect={onConnect}
               onDisconnect={onDisconnect}
             />

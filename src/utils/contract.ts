@@ -1,22 +1,14 @@
 // ---------------------------------------------------------------------------
-// contract.ts — the single seam between Umbra's UI and the Midnight network.
+// contract.ts — Umbra on-chain contract integration
 //
-// Two modes, same interface:
-//   1. "local"   — an in-memory ledger that mirrors the Compact circuits'
-//                  logic exactly (see contracts/umbra-payroll.compact). Used
-//                  automatically until a deployed contract address is
-//                  configured, so the UI is fully clickable during review.
-//   2. "network" — talks to the real deployed contract on Preprod through
-//                  the Midnight.js SDK + the Lace wallet connector.
+// Uses the @midnight-ntwrk/dapp-connector-api to connect to the 1AM wallet
+// and the Midnight.js SDK to call the deployed Umbra Payroll contract on Preprod.
 //
-// Wiring step for Anish after `compact compile` + Preprod deploy:
-//   1. Set VITE_CONTRACT_ADDRESS in .env (see README "Setup & Run Locally").
-//   2. Import the generated contract API from `managed/umbra-payroll/` and
-//      replace the two TODOs marked NETWORK MODE below with real calls to
-//      `@midnight-ntwrk/midnight-js-contracts` using that generated API.
-// The circuit logic, hashing, and validation below are not placeholders —
-// they are the real rules the on-chain circuits enforce, so the local mode
-// behaves identically to the deployed one from a user's perspective.
+// Proof server: https://api-preprod.1am.xyz  (the 1AM ProofStation — required
+//   for 1AM wallet compatibility; the default Midnight proof server produces
+//   ZK proofs incompatible with 1AM wallet, causing Error 182)
+//
+// Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
 export type PoolSummary = {
@@ -26,6 +18,8 @@ export type PoolSummary = {
   claimedCount: number;
   settled: boolean;
   payerTag: string;
+  txId?: string;
+  explorerUrl?: string;
 };
 
 export type CreatePoolInput = {
@@ -39,13 +33,29 @@ export type ClaimPayoutInput = {
   recipientIndex: number;
 };
 
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS ?? "";
-export const RUNTIME_MODE: "local" | "network" = CONTRACT_ADDRESS
-  ? "network"
-  : "local";
+// ─── Network config ──────────────────────────────────────────────────────────
+const PREPROD_INDEXER_HTTP  = "https://indexer.preprod.midnight.network/api/v4/graphql";
+const PREPROD_INDEXER_WS    = "wss://indexer.preprod.midnight.network/api/v4/graphql/ws";
+// CRITICAL: Use 1AM ProofStation — avoids Error 182 with default proof server
+const ONEAM_PROOF_SERVER    = "https://api-preprod.1am.xyz";
+const CONTRACT_ADDRESS      = import.meta.env.VITE_CONTRACT_ADDRESS ?? "";
 
-// ---- Shared crypto-ish helpers (mirror the circuit's persistentHash) ------
+export const RUNTIME_MODE: "local" | "network" = CONTRACT_ADDRESS ? "network" : "local";
 
+// Explorer helpers
+export function explorerTxUrl(txId: string): string {
+  const clean = txId.replace(/^0x/, "");
+  return `https://explorer.1am.xyz/tx/${clean}?network=preprod`;
+}
+export function explorerContractUrl(): string {
+  return `https://preprod.midnight.network/contract/${CONTRACT_ADDRESS}`;
+}
+export function truncateHash(hash: string): string {
+  if (!hash) return "—";
+  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
+}
+
+// ─── Crypto helpers (mirror Compact circuit hashes) ──────────────────────────
 async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -53,159 +63,230 @@ async function sha256Hex(input: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
 function randomSalt(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
-/** Mirrors: persistentHash(pad(32,total) ++ pad(32,count) ++ salt) */
-export async function commitmentHash(
-  total: number,
-  count: number,
-  salt: string
-): Promise<string> {
+export async function commitmentHash(total: number, count: number, salt: string): Promise<string> {
   return sha256Hex(`pool:${total}:${count}:${salt}`);
 }
-
-/** Mirrors: persistentHash(pad(32,poolId) ++ pad(32,index) ++ pubKey ++ salt) */
-export async function nullifierHash(
-  poolId: number,
-  index: number,
-  walletTag: string,
-  salt: string
-): Promise<string> {
+export async function nullifierHash(poolId: number, index: number, walletTag: string, salt: string): Promise<string> {
   return sha256Hex(`claim:${poolId}:${index}:${walletTag}:${salt}`);
 }
 
-export function truncateHash(hash: string): string {
-  if (!hash) return "—";
-  return `${hash.slice(0, 6)}…${hash.slice(-6)}`;
-}
-
-// ---- Local ledger simulator (mode 1) --------------------------------------
-
+// ─── Local ledger simulator (mode 1 — no contract address set) ───────────────
 type LocalPool = {
   poolId: number;
   commitment: string;
   recipientCount: number;
   claimedCount: number;
   payerTag: string;
-  shares: number[]; // kept only in this in-memory session, never "on-chain"
+  shares: number[];
 };
 
 class LocalLedger {
   private pools: LocalPool[] = [];
   private nullifiers = new Set<string>();
 
-  async createPool(
-    input: CreatePoolInput,
-    walletTag: string
-  ): Promise<PoolSummary> {
+  async createPool(input: CreatePoolInput, walletTag: string): Promise<PoolSummary> {
     const sum = input.shares.reduce((a, b) => a + b, 0);
-    if (sum !== input.totalAmount) {
-      throw new Error(
-        `recipient shares must sum exactly to the pool total (got ${sum}, expected ${input.totalAmount})`
-      );
-    }
+    if (sum !== input.totalAmount)
+      throw new Error(`recipient shares must sum to pool total (got ${sum}, expected ${input.totalAmount})`);
     const salt = randomSalt();
-    const commitment = await commitmentHash(
-      input.totalAmount,
-      input.shares.length,
-      salt
-    );
+    const commitment = await commitmentHash(input.totalAmount, input.shares.length, salt);
     const poolId = this.pools.length;
-    const pool: LocalPool = {
-      poolId,
-      commitment,
-      recipientCount: input.shares.length,
-      claimedCount: 0,
-      payerTag: walletTag,
-      shares: input.shares,
-    };
+    const pool: LocalPool = { poolId, commitment, recipientCount: input.shares.length, claimedCount: 0, payerTag: walletTag, shares: input.shares };
     this.pools.push(pool);
     return this.toSummary(pool);
   }
 
-  async claimPayout(
-    input: ClaimPayoutInput,
-    walletTag: string
-  ): Promise<PoolSummary> {
+  async claimPayout(input: ClaimPayoutInput, walletTag: string): Promise<PoolSummary> {
     const pool = this.pools[input.poolId];
     if (!pool) throw new Error("pool does not exist");
-    if (pool.claimedCount >= pool.recipientCount) {
-      throw new Error("all shares for this pool are already claimed");
-    }
-    if (pool.shares[input.recipientIndex] !== input.shareAmount) {
-      throw new Error("share amount does not match this recipient index");
-    }
+    if (pool.claimedCount >= pool.recipientCount) throw new Error("all shares for this pool are already claimed");
+    if (pool.shares[input.recipientIndex] !== input.shareAmount) throw new Error("share amount does not match recipient index");
     const salt = randomSalt();
-    const nullifier = await nullifierHash(
-      input.poolId,
-      input.recipientIndex,
-      walletTag,
-      salt
-    );
-    if (this.nullifiers.has(nullifier)) {
-      throw new Error("this share has already been claimed");
-    }
+    const nullifier = await nullifierHash(input.poolId, input.recipientIndex, walletTag, salt);
+    if (this.nullifiers.has(nullifier)) throw new Error("this share has already been claimed");
     this.nullifiers.add(nullifier);
     pool.claimedCount += 1;
     return this.toSummary(pool);
   }
 
-  listPools(): PoolSummary[] {
-    return this.pools.map((p) => this.toSummary(p));
-  }
+  listPools(): PoolSummary[] { return this.pools.map((p) => this.toSummary(p)); }
 
   private toSummary(p: LocalPool): PoolSummary {
-    return {
-      poolId: p.poolId,
-      commitment: p.commitment,
-      recipientCount: p.recipientCount,
-      claimedCount: p.claimedCount,
-      settled: p.claimedCount === p.recipientCount,
-      payerTag: p.payerTag,
-    };
+    return { poolId: p.poolId, commitment: p.commitment, recipientCount: p.recipientCount, claimedCount: p.claimedCount, settled: p.claimedCount === p.recipientCount, payerTag: p.payerTag };
   }
 }
 
 const localLedger = new LocalLedger();
 
-// ---- Public API used by the UI ---------------------------------------------
+// ─── Network mode — real on-chain calls via 1AM wallet ───────────────────────
+let _providersCache: any = null;
 
+async function getMidnightProviders(walletProvider: any) {
+  if (_providersCache) return _providersCache;
+
+  const [
+    { indexerPublicDataProvider },
+    { httpClientProofProvider },
+    { levelPrivateStateProvider },
+    { FetchZkConfigProvider },
+    { setNetworkId },
+  ] = await Promise.all([
+    import("@midnight-ntwrk/midnight-js-indexer-public-data-provider"),
+    import("@midnight-ntwrk/midnight-js-http-client-proof-provider"),
+    import("@midnight-ntwrk/midnight-js-level-private-state-provider"),
+    import("@midnight-ntwrk/midnight-js-fetch-zk-config-provider"),
+    import("@midnight-ntwrk/midnight-js-network-id"),
+  ]);
+
+  setNetworkId("preprod");
+
+  const zkConfigPath = `${window.location.origin}/managed/bboard`;
+  const zkConfigProvider = new FetchZkConfigProvider(zkConfigPath, fetch.bind(window));
+
+  // Use 1AM ProofStation — REQUIRED for 1AM wallet compatibility
+  const proofProvider = httpClientProofProvider(ONEAM_PROOF_SERVER, zkConfigProvider as any);
+
+  const publicDataProvider = indexerPublicDataProvider(PREPROD_INDEXER_HTTP, PREPROD_INDEXER_WS);
+
+  const privateStateProvider = levelPrivateStateProvider({
+    privateStateStoreName: "umbra-private-state",
+    signingKeyStoreName: "umbra-private-state-signing-keys",
+    privateStoragePasswordProvider: () => "TempPassword123!Secure",
+    accountId: walletProvider?.coinPublicKey ?? "umbra-user",
+  });
+
+  _providersCache = {
+    publicDataProvider,
+    proofProvider,
+    zkConfigProvider,
+    privateStateProvider,
+    walletProvider,
+    midnightProvider: walletProvider,
+  };
+
+  return _providersCache;
+}
+
+async function getDeployedContract(walletProvider: any) {
+  const [
+    { findDeployedContract },
+  ] = await Promise.all([
+    import("@midnight-ntwrk/midnight-js-contracts"),
+  ]);
+
+  // Lazy import the compiled contract (generated by compact compiler)
+  const { CompiledUmbraPayrollContract } = await import(
+    /* @vite-ignore */
+    "/managed/bboard/contract/index.js"
+  ).catch(() => ({ CompiledUmbraPayrollContract: null }));
+
+  if (!CompiledUmbraPayrollContract) {
+    throw new Error(
+      "Contract bindings not found. Run the deployment workflow first and set VITE_CONTRACT_ADDRESS."
+    );
+  }
+
+  const providers = await getMidnightProviders(walletProvider);
+
+  return findDeployedContract(providers, {
+    contractAddress: CONTRACT_ADDRESS,
+    compiledContract: CompiledUmbraPayrollContract,
+  });
+}
+
+// ─── Public API ──────────────────────────────────────────────────────────────
 export async function createPool(
   input: CreatePoolInput,
-  walletTag: string
+  walletTag: string,
+  walletProvider?: any
 ): Promise<PoolSummary> {
   if (RUNTIME_MODE === "local") {
     return localLedger.createPool(input, walletTag);
   }
-  // NETWORK MODE — replace with the generated contract API, e.g.:
-  //   const api = await getDeployedUmbraContract(CONTRACT_ADDRESS, providers);
-  //   const tx = await api.createPool({ poolTotal: ..., recipientShares: ... });
-  //   return summaryFromLedgerState(tx.public);
-  throw new Error(
-    "Network mode is not wired yet — set up the generated contract API from managed/ first."
+
+  // Network mode — real on-chain transaction
+  const contract = await getDeployedContract(walletProvider);
+  const salt = randomSalt();
+  const saltBytes = new Uint8Array(Buffer.from(salt.padEnd(64, "0").slice(0, 64), "hex"));
+
+  const sharesAsU64 = new Array(32).fill(0n).map((_, i) =>
+    i < input.shares.length ? BigInt(input.shares[i]) : 0n
   );
+
+  // Call createPool circuit with private witnesses
+  const result = await contract.callTx.createPool({
+    privateState: {
+      poolTotal: BigInt(input.totalAmount),
+      recipientShares: sharesAsU64,
+      recipientCount: input.shares.length,
+      commitSalt: saltBytes,
+      callerSecretKey: new Uint8Array(32),
+      claimShareAmount: 0n,
+      claimRecipientIndex: 0,
+      claimSalt: new Uint8Array(32),
+    },
+  });
+
+  const txId = result.txId as string;
+  const poolId = Number(result.public?.poolCount ?? 0) - 1;
+  const commitment = await commitmentHash(input.totalAmount, input.shares.length, salt);
+
+  return {
+    poolId,
+    commitment,
+    recipientCount: input.shares.length,
+    claimedCount: 0,
+    settled: false,
+    payerTag: walletTag,
+    txId,
+    explorerUrl: explorerTxUrl(txId),
+  };
 }
 
 export async function claimPayout(
   input: ClaimPayoutInput,
-  walletTag: string
+  walletTag: string,
+  walletProvider?: any
 ): Promise<PoolSummary> {
   if (RUNTIME_MODE === "local") {
     return localLedger.claimPayout(input, walletTag);
   }
-  // NETWORK MODE — replace with the generated contract API, e.g.:
-  //   const api = await getDeployedUmbraContract(CONTRACT_ADDRESS, providers);
-  //   const tx = await api.claimPayout(input.poolId, { ... });
-  //   return summaryFromLedgerState(tx.public);
-  throw new Error(
-    "Network mode is not wired yet — set up the generated contract API from managed/ first."
-  );
+
+  const contract = await getDeployedContract(walletProvider);
+  const salt = randomSalt();
+  const saltBytes = new Uint8Array(Buffer.from(salt.padEnd(64, "0").slice(0, 64), "hex"));
+
+  const result = await contract.callTx.claimPayout(BigInt(input.poolId), {
+    privateState: {
+      poolTotal: 0n,
+      recipientShares: new Array(32).fill(0n),
+      recipientCount: 0,
+      commitSalt: new Uint8Array(32),
+      callerSecretKey: new Uint8Array(32),
+      claimShareAmount: BigInt(input.shareAmount),
+      claimRecipientIndex: input.recipientIndex,
+      claimSalt: saltBytes,
+    },
+  });
+
+  const txId = result.txId as string;
+  const claimedCount = Number(result.public?.poolClaimedCount?.get(BigInt(input.poolId)) ?? 0);
+  const recipientCount = Number(result.public?.poolRecipientCount?.get(BigInt(input.poolId)) ?? 0);
+
+  return {
+    poolId: input.poolId,
+    commitment: "",
+    recipientCount,
+    claimedCount,
+    settled: claimedCount >= recipientCount,
+    payerTag: walletTag,
+    txId,
+    explorerUrl: explorerTxUrl(txId),
+  };
 }
 
 export function listPools(): PoolSummary[] {
