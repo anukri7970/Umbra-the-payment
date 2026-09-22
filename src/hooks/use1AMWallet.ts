@@ -156,12 +156,27 @@ export function use1AMWallet() {
       }
 
       // Extract address + coinPublicKey from result
-      let addr =
-        result.address ||
-        result.state?.address ||
-        "";
+      let addr = "";
+      let pubKey = "";
 
-      let pubKey = result.coinPublicKey || "";
+      // Standard Midnight ConnectedAPI (Nightly / Lace / 1AM)
+      if (typeof result.getUnshieldedAddress === "function") {
+        const unshielded = await result.getUnshieldedAddress();
+        addr = unshielded.unshieldedAddress || "";
+      }
+      
+      if (typeof result.getShieldedAddresses === "function") {
+        const shielded = await result.getShieldedAddresses();
+        pubKey = shielded.shieldedCoinPublicKey || "";
+      }
+
+      // Legacy fallbacks (in case of older wallet specs)
+      if (!addr) {
+        addr = result.address || result.state?.address || "";
+      }
+      if (!pubKey) {
+        pubKey = result.coinPublicKey || "";
+      }
 
       if (!pubKey && typeof result.getPublicKeys === "function") {
         const keys = await result.getPublicKeys();
