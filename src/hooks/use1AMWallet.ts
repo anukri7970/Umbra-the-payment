@@ -48,6 +48,7 @@ export interface WalletApi {
 const LS_CONNECTED = "umbra_wallet_connected";
 const LS_ADDRESS   = "umbra_wallet_address";
 const LS_PUBKEY    = "umbra_wallet_coinPublicKey";
+const LS_ENCKEY    = "umbra_wallet_encryptionPublicKey";
 
 // ─── Discover 1AM wallet from window.midnight ────────────────────────────────
 function discover1AMProvider(): InjectedWalletProvider | null {
@@ -144,11 +145,12 @@ export function use1AMWallet() {
   const providerRef = useRef<InjectedWalletProvider | null>(null);
 
   // ── persist helpers ──────────────────────────────────────────────────────
-  const persistSession = useCallback((addr: string, pubKey: string) => {
+  const persistSession = useCallback((addr: string, pubKey: string, encKey: string) => {
     try {
       localStorage.setItem(LS_CONNECTED, "true");
       localStorage.setItem(LS_ADDRESS, addr);
       localStorage.setItem(LS_PUBKEY, pubKey);
+      localStorage.setItem(LS_ENCKEY, encKey);
     } catch (e) {
       // ignore
     }
@@ -159,6 +161,7 @@ export function use1AMWallet() {
       localStorage.removeItem(LS_CONNECTED);
       localStorage.removeItem(LS_ADDRESS);
       localStorage.removeItem(LS_PUBKEY);
+      localStorage.removeItem(LS_ENCKEY);
     } catch (e) {
       // ignore
     }
@@ -194,6 +197,10 @@ export function use1AMWallet() {
         throw new Error("1AM wallet has no enable() or connect() method");
       }
 
+      if (!result || Object.keys(result).length === 0) {
+        result = provider as any;
+      }
+
       const { addr, pubKey, encPubKey } = await extractWalletCredentials(result);
 
       if (!addr) {
@@ -205,7 +212,7 @@ export function use1AMWallet() {
       setCoinPublicKey(pubKey);
       setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
       setStatus("connected");
-      persistSession(addr, pubKey);
+      persistSession(addr, pubKey, encPubKey);
     } catch (err) {
       console.error("Wallet connection failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to connect 1AM wallet";
@@ -258,10 +265,13 @@ export function use1AMWallet() {
             if (typeof provider.enable === "function") {
               result = await provider.enable();
             }
+            if (!result || Object.keys(result).length === 0) {
+              result = provider as any;
+            }
             const extracted = await extractWalletCredentials(result);
             const addr = extracted.addr || localStorage.getItem(LS_ADDRESS) || "";
             const pubKey = extracted.pubKey || localStorage.getItem(LS_PUBKEY) || "";
-            const encPubKey = extracted.encPubKey;
+            const encPubKey = extracted.encPubKey || localStorage.getItem(LS_ENCKEY) || "";
             setAddress(addr);
             setCoinPublicKey(pubKey);
             setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
