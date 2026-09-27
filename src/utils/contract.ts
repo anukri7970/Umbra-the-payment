@@ -138,7 +138,7 @@ function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-async function getMidnightProviders(walletProvider: any) {
+async function getMidnightProviders(walletApi: any) {
   if (_providersCache) return _providersCache;
 
   const [
@@ -147,12 +147,16 @@ async function getMidnightProviders(walletProvider: any) {
     { levelPrivateStateProvider },
     { FetchZkConfigProvider },
     { setNetworkId },
+    { Transaction },
+    { toHex, fromHex },
   ] = await Promise.all([
     import("@midnight-ntwrk/midnight-js-indexer-public-data-provider"),
     import("@midnight-ntwrk/midnight-js-http-client-proof-provider"),
     import("@midnight-ntwrk/midnight-js-level-private-state-provider"),
     import("@midnight-ntwrk/midnight-js-fetch-zk-config-provider"),
     import("@midnight-ntwrk/midnight-js-network-id"),
+    import("@midnight-ntwrk/midnight-js-protocol/ledger"),
+    import("@midnight-ntwrk/midnight-js-utils"),
   ]);
 
   setNetworkId("preprod");
@@ -165,12 +169,33 @@ async function getMidnightProviders(walletProvider: any) {
 
   const publicDataProvider = indexerPublicDataProvider(PREPROD_INDEXER_HTTP, PREPROD_INDEXER_WS);
 
+  const shieldedAddresses = await walletApi.getShieldedAddresses();
+
   const privateStateProvider = levelPrivateStateProvider({
     privateStateStoreName: "umbra-private-state",
     signingKeyStoreName: "umbra-private-state-signing-keys",
     privateStoragePasswordProvider: () => "TempPassword123!Secure",
-    accountId: walletProvider?.coinPublicKey ?? "umbra-user",
+    accountId: shieldedAddresses.shieldedCoinPublicKey ?? "umbra-user",
   });
+
+  const walletProvider = {
+    getCoinPublicKey: () => shieldedAddresses.shieldedCoinPublicKey,
+    getEncryptionPublicKey: () => shieldedAddresses.shieldedEncryptionPublicKey,
+    balanceTx: async (tx: any): Promise<any> => {
+      const serializedTx = toHex(tx.serialize());
+      const received = await walletApi.balanceUnsealedTransaction(serializedTx);
+      return Transaction.deserialize("signature", "proof", "binding", fromHex(received.tx)) as any;
+    },
+  } as any;
+
+  const midnightProvider = {
+    submitTx: async (tx: any): Promise<string> => {
+      const serializedTx = toHex(tx.serialize());
+      await walletApi.submitTransaction(serializedTx);
+      const txIdentifiers = tx.identifiers();
+      return txIdentifiers[0];
+    }
+  } as any;
 
   _providersCache = {
     publicDataProvider,
@@ -178,7 +203,7 @@ async function getMidnightProviders(walletProvider: any) {
     zkConfigProvider,
     privateStateProvider,
     walletProvider,
-    midnightProvider: walletProvider,
+    midnightProvider,
   };
 
   return _providersCache;
