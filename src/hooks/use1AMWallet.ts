@@ -79,6 +79,38 @@ function discover1AMProvider(): InjectedWalletProvider | null {
   return null;
 }
 
+async function extractWalletCredentials(result: any) {
+  let addr = "";
+  let pubKey = "";
+  let encPubKey = "";
+
+  if (typeof result.getUnshieldedAddress === "function") {
+    const unshielded = await result.getUnshieldedAddress();
+    addr = unshielded.unshieldedAddress || "";
+  }
+  
+  if (typeof result.getShieldedAddresses === "function") {
+    const shielded = await result.getShieldedAddresses();
+    pubKey = shielded.shieldedCoinPublicKey || "";
+    encPubKey = shielded.shieldedEncryptionPublicKey || "";
+  }
+
+  if (!addr) addr = result.address || result.state?.address || "";
+  if (!pubKey) pubKey = result.coinPublicKey || "";
+
+  if (!pubKey && typeof result.getPublicKeys === "function") {
+    const keys = await result.getPublicKeys();
+    pubKey = keys.coinPublicKey || "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    encPubKey = (keys as any).encryptionPublicKey || "";
+  }
+
+  if (!encPubKey) encPubKey = result.encryptionPublicKey as string || "";
+  if (!addr && pubKey) addr = `${pubKey.slice(0, 8)}…${pubKey.slice(-6)}`;
+
+  return { addr, pubKey, encPubKey };
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 export function use1AMWallet() {
   const [status, setStatus] = useState<WalletStatus>(() => {
@@ -156,46 +188,7 @@ export function use1AMWallet() {
         throw new Error("1AM wallet has no enable() or connect() method");
       }
 
-      // Extract address + coinPublicKey + encryptionPublicKey from result
-      let addr = "";
-      let pubKey = "";
-      let encPubKey = "";
-
-      // Standard Midnight ConnectedAPI (Nightly / Lace / 1AM)
-      if (typeof result.getUnshieldedAddress === "function") {
-        const unshielded = await result.getUnshieldedAddress();
-        addr = unshielded.unshieldedAddress || "";
-      }
-      
-      if (typeof result.getShieldedAddresses === "function") {
-        const shielded = await result.getShieldedAddresses();
-        pubKey = shielded.shieldedCoinPublicKey || "";
-        encPubKey = shielded.shieldedEncryptionPublicKey || "";
-      }
-
-      // Legacy fallbacks (in case of older wallet specs)
-      if (!addr) {
-        addr = result.address || result.state?.address || "";
-      }
-      if (!pubKey) {
-        pubKey = result.coinPublicKey || "";
-      }
-
-      if (!pubKey && typeof result.getPublicKeys === "function") {
-        const keys = await result.getPublicKeys();
-        pubKey = keys.coinPublicKey || "";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        encPubKey = (keys as any).encryptionPublicKey || "";
-      }
-
-      // Direct properties fallback
-      if (!encPubKey) {
-        encPubKey = result.encryptionPublicKey as string || "";
-      }
-
-      if (!addr && pubKey) {
-        addr = `${pubKey.slice(0, 8)}…${pubKey.slice(-6)}`;
-      }
+      const { addr, pubKey, encPubKey } = await extractWalletCredentials(result);
 
       if (!addr) {
         const keys = Object.keys(result || {}).join(", ");
@@ -259,9 +252,9 @@ export function use1AMWallet() {
             if (typeof provider.enable === "function") {
               result = await provider.enable();
             }
-            const addr = result.address || result.state?.address || localStorage.getItem(LS_ADDRESS) || "";
-            const pubKey = result.coinPublicKey || localStorage.getItem(LS_PUBKEY) || "";
-            const encPubKey = result.encryptionPublicKey as string || "";
+            let { addr, pubKey, encPubKey } = await extractWalletCredentials(result);
+            if (!addr) addr = localStorage.getItem(LS_ADDRESS) || "";
+            if (!pubKey) pubKey = localStorage.getItem(LS_PUBKEY) || "";
             setAddress(addr);
             setCoinPublicKey(pubKey);
             setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
