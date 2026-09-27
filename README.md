@@ -11,8 +11,7 @@
 ## Contract Address
 
 | Network | Address |
-|---------|---------|
-| Preprod | `[CONTRACT ADDRESS — paste here after running the Preprod deploy, see "Deploy to Preprod" below]` |
+| Preprod | `4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0` |
 
 ## What This Product Does
 
