@@ -4,9 +4,7 @@
 
 > Confidential payroll and revenue splits: prove every share adds up, without ever showing who got what.
 
-## Live Demo
 
-[PREPROD DEMO URL — paste after deploying the frontend, e.g. to Vercel/Netlify]
 
 ## Contract Address
 
@@ -141,10 +139,6 @@ Every push to `main` and every pull request runs, via
 See [`docs/USAGE.md`](docs/USAGE.md) for a full walkthrough: sealing a pool,
 sharing claim details off-chain, claiming a share, and reading the public
 ledger.
-
-## Product X Profile
-
-[PLACEHOLDER — add your product's X/Twitter profile link here after creating the account]
 
 ## Project History
 
