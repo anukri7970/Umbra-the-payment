@@ -260,6 +260,8 @@ export function use1AMWallet() {
             }
             if (typeof provider.enable === "function") {
               result = await provider.enable();
+            } else if (typeof provider.connect === "function") {
+              result = await provider.connect("preprod");
             }
 
             const extracted = await extractWalletCredentials(result);
