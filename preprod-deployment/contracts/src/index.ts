@@ -3,27 +3,23 @@
 // (The managed/ folder is produced by the Compact compiler at CI time)
 
 import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-js";
+export * from "./managed/bboard/contract/index.js";
+export * from "./witnesses.js";
+import * as CompiledUmbraContract from "./managed/bboard/contract/index.js";
+import * as Witnesses from "./witnesses.js";
 
-export async function getCompiledUmbraPayrollContract() {
-  const contractModule = await import("./managed/bboard/contract/index.js");
-  const ContractClass = contractModule.Contract || (contractModule as any).default?.Contract;
-  
-  if (!ContractClass) {
-    throw new Error("Failed to resolve Contract class from generated bindings");
+class ContractWrapper extends CompiledUmbraContract.Contract<any, any> {
+  constructor() {
+    super(Witnesses.witnesses as any);
   }
-
-  const witnessesModule = await import("./witnesses.js");
-
-  const DynamicContractWrapper = class extends ContractClass {
-    constructor() {
-      super(witnessesModule.witnesses as any);
-    }
-  };
-
-  return CompiledContract.make(
-    "bboard",
-    DynamicContractWrapper as any
-  ).pipe(
-    CompiledContract.withCompiledFileAssets("/managed/bboard") // fetch from public/ at runtime
-  ) as any;
 }
+
+// The compiled Umbra Payroll contract, ready for deployContract() / findDeployedContract()
+export const CompiledUmbraPayrollContract = CompiledContract.make(
+  "bboard",
+  ContractWrapper as any
+).pipe(
+  CompiledContract.withCompiledFileAssets("./managed/bboard")
+) as any;
+
+export { Witnesses };

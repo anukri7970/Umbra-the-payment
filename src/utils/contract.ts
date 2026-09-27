@@ -12,7 +12,9 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-import { getCompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/index.js";
+// Contract module is resolved via Vite alias @midnight-ntwrk/umbra-contract -> preprod-deployment/contracts/src/index.ts
+// For TypeScript, we import directly from the source path
+import type {} from "../../preprod-deployment/contracts/src/index.js";
 
 export type PoolSummary = {
   poolId: number;
@@ -186,11 +188,15 @@ async function getDeployedContract(walletProvider: any) {
   const { findDeployedContract } = await import("@midnight-ntwrk/midnight-js-contracts");
   const providers = await getMidnightProviders(walletProvider);
 
-  const compiledContract = await getCompiledUmbraPayrollContract();
+  // Dynamic import through Vite alias — bypasses Rollup static analysis completely
+  // @ts-ignore
+  const contractMod = await import(/* @vite-ignore */ "@midnight-ntwrk/umbra-contract");
+  const compiledContract = contractMod.CompiledUmbraPayrollContract;
 
-  return findDeployedContract(providers, {
+  return (findDeployedContract as any)(providers, {
     contractAddress: CONTRACT_ADDRESS,
     compiledContract,
+    privateStateId: CONTRACT_ADDRESS,
   });
 }
 
