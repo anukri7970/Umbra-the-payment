@@ -12,7 +12,22 @@
 - 🔎 **Example Tx:** [View on 1AM Explorer](https://explorer.1am.xyz/tx/9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a?network=preprod)
 - 🐦 **X (Twitter):** [@umbraThePayment](https://x.com/umbraThePayment) | [Launch Thread](https://x.com/umbraThePayment/status/2104192068683727165)
 
+## Mainnet / Testnet Contract Details
+
+| Network | Address |
+| Preprod | `4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0` |
+
+**View on Midnight Explorer**
+[Contract 0x4e73af2c… | Midnight Explorer](https://preprod.midnightexplorer.com/contracts/0x4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0)
+![Contract Onchain](screenshots/contract%20onchain.png)
+
+**Example Transaction (1AM Explorer)**
+[9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a](https://explorer.1am.xyz/tx/9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a?network=preprod)
+![Claim Payout](screenshots/claim%20payout.png)
+
 ## Project Description
+
+![Product UI](screenshots/product%20ui.png)
 
 Umbra is a confidential payroll and revenue-split dApp built on Midnight.
 DAOs, freelance collectives, and revenue-share agreements currently have to
@@ -31,17 +46,6 @@ awkward — it would be a permanent, unerasable compensation leak. The vision fo
 - **Redacted Ledger Entries:** Only a commitment hash is ever published, never the total or any individual amount.
 - **Private Claims:** Recipients prove they belong to the pool and haven't claimed before using a one-time nullifier, ensuring a share can never be double-claimed while keeping the claimant's identity and amount entirely private.
 - **Trustless Settlement:** Anyone can independently verify that a pool is correctly and fully settled with zero disclosure of individual compensation.
-
-## Mainnet / Testnet Contract Details
-
-| Network | Address |
-| Preprod | `4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0` |
-
-**View on Midnight Explorer**
-[Contract 0x4e73af2c… | Midnight Explorer](https://preprod.midnightexplorer.com/contracts/0x4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0)
-
-**Example Transaction (1AM Explorer)**
-[9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a](https://explorer.1am.xyz/tx/9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a?network=preprod)
 
 ## Future Scope
 
@@ -73,6 +77,7 @@ sequenceDiagram
 
 **Try the Live DApp:** [https://umbra-the-payment.vercel.app](https://umbra-the-payment.vercel.app)
 **Watch the Walkthrough:** [Demo on Google Drive](https://drive.google.com/file/d/1HitWlEBr3wZ0YimV3IULD8aNofJOe42N/view?usp=sharing)
+![Claim Dashboard](screenshots/claim%20dashbaord.png)
 
 1. **Install the 1AM Wallet:** Install the 1AM Wallet extension and set the network to Preprod.
 2. **Fund Your Wallet:** Ensure you have testnet DUST (or the relevant test token) to pay for transaction fees.
