@@ -5,7 +5,7 @@ import "./index.css";
 
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
-  window.Buffer = window.Buffer || Buffer;
+  (window as any).Buffer = (window as any).Buffer || Buffer;
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
