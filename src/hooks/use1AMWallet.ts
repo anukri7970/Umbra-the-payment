@@ -81,6 +81,7 @@ function discover1AMProvider(): InjectedWalletProvider | null {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function extractWalletCredentials(result: any) {
+  console.log("=== 1AM WALLET RESULT PAYLOAD ===", result);
   let addr = "";
   let pubKey = "";
   let encPubKey = "";
@@ -92,23 +93,27 @@ async function extractWalletCredentials(result: any) {
   
   if (typeof result.getShieldedAddresses === "function") {
     const shielded = await result.getShieldedAddresses();
+    console.log("Shielded addresses:", shielded);
     pubKey = shielded.shieldedCoinPublicKey || "";
     encPubKey = shielded.shieldedEncryptionPublicKey || "";
   }
 
   if (!addr) addr = result.address || result.state?.address || "";
-  if (!pubKey) pubKey = result.coinPublicKey || "";
+  if (!pubKey) pubKey = result.coinPublicKey || result.state?.coinPublicKey || "";
 
   if (!pubKey && typeof result.getPublicKeys === "function") {
     const keys = await result.getPublicKeys();
+    console.log("Public keys:", keys);
     pubKey = keys.coinPublicKey || "";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    encPubKey = (keys as any).encryptionPublicKey || "";
+    encPubKey = encPubKey || (keys as any).encryptionPublicKey || (keys as any).shieldedEncryptionPublicKey || "";
   }
 
-  if (!encPubKey) encPubKey = result.encryptionPublicKey as string || "";
+  if (!encPubKey) encPubKey = result.encryptionPublicKey || result.state?.encryptionPublicKey || result.encPubKey || "";
+  
   if (!addr && pubKey) addr = `${pubKey.slice(0, 8)}…${pubKey.slice(-6)}`;
 
+  console.log("Extracted Credentials:", { addr, pubKey, encPubKey });
   return { addr, pubKey, encPubKey };
 }
 
