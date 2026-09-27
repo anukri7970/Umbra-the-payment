@@ -184,6 +184,7 @@ export function use1AMWallet() {
       if (!pubKey && typeof result.getPublicKeys === "function") {
         const keys = await result.getPublicKeys();
         pubKey = keys.coinPublicKey || "";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         encPubKey = (keys as any).encryptionPublicKey || "";
       }
 
