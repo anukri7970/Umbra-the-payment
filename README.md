@@ -4,6 +4,14 @@
 
 > Confidential payroll and revenue splits: prove every share adds up, without ever showing who got what.
 
+## 🔗 Quick Links
+
+- 🌐 **Live DApp:** [umbra-the-payment.vercel.app](https://umbra-the-payment.vercel.app)
+- 🎥 **Video Walkthrough:** [Watch the Demo](https://drive.google.com/file/d/1HitWlEBr3wZ0YimV3IULD8aNofJOe42N/view?usp=sharing)
+- 📜 **Deployed Contract:** [View on Midnight Explorer](https://preprod.midnightexplorer.com/contracts/0x4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0)
+- 🔎 **Example Tx:** [View on 1AM Explorer](https://explorer.1am.xyz/tx/9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a?network=preprod)
+- 🐦 **X (Twitter):** [@umbraThePayment](https://x.com/umbraThePayment) | [Launch Thread](https://x.com/umbraThePayment/status/2104192068683727165)
+
 ## Project Description
 
 Umbra is a confidential payroll and revenue-split dApp built on Midnight.
