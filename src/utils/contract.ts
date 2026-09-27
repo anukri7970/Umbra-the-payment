@@ -197,6 +197,16 @@ async function getDeployedContract(walletProvider: any) {
     contractAddress: CONTRACT_ADDRESS,
     compiledContract,
     privateStateId: CONTRACT_ADDRESS,
+    initialPrivateState: {
+      poolTotal: 0n,
+      recipientShares: new Array(32).fill(0n),
+      recipientCount: 0n,
+      commitSalt: new Uint8Array(32),
+      callerSecretKey: new Uint8Array(32),
+      claimShareAmount: 0n,
+      claimRecipientIndex: 0n,
+      claimSalt: new Uint8Array(32),
+    },
   });
 }
 
