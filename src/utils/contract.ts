@@ -256,19 +256,20 @@ export async function createPool(
     i < input.shares.length ? BigInt(input.shares[i]) : 0n
   );
 
-  // Call createPool circuit with private witnesses
-  const result = await contract.callTx.createPool({
-    privateState: {
-      poolTotal: BigInt(input.totalAmount),
-      recipientShares: sharesAsU64,
-      recipientCount: input.shares.length,
-      commitSalt: saltBytes,
-      callerSecretKey: new Uint8Array(32),
-      claimShareAmount: 0n,
-      claimRecipientIndex: 0,
-      claimSalt: new Uint8Array(32),
-    },
+  const providers = await getMidnightProviders(walletProvider);
+  await providers.privateStateProvider.set(CONTRACT_ADDRESS, {
+    poolTotal: BigInt(input.totalAmount),
+    recipientShares: sharesAsU64,
+    recipientCount: input.shares.length,
+    commitSalt: saltBytes,
+    callerSecretKey: new Uint8Array(32),
+    claimShareAmount: 0n,
+    claimRecipientIndex: 0,
+    claimSalt: new Uint8Array(32),
   });
+
+  // Call createPool circuit with no arguments (uses private state set above)
+  const result = await contract.callTx.createPool();
 
   const txId = (result.txHash || result.txId) as string;
   const poolId = Number(result.public?.poolCount ?? 0) - 1;
@@ -299,18 +300,20 @@ export async function claimPayout(
   const salt = randomSalt();
   const saltBytes = hexToBytes(salt.padEnd(64, "0").slice(0, 64));
 
-  const result = await contract.callTx.claimPayout(BigInt(input.poolId), {
-    privateState: {
-      poolTotal: 0n,
-      recipientShares: new Array(32).fill(0n),
-      recipientCount: 0,
-      commitSalt: new Uint8Array(32),
-      callerSecretKey: new Uint8Array(32),
-      claimShareAmount: BigInt(input.shareAmount),
-      claimRecipientIndex: input.recipientIndex,
-      claimSalt: saltBytes,
-    },
+  const providers = await getMidnightProviders(walletProvider);
+  await providers.privateStateProvider.set(CONTRACT_ADDRESS, {
+    poolTotal: 0n,
+    recipientShares: new Array(32).fill(0n),
+    recipientCount: 0,
+    commitSalt: new Uint8Array(32),
+    callerSecretKey: new Uint8Array(32),
+    claimShareAmount: BigInt(input.shareAmount),
+    claimRecipientIndex: input.recipientIndex,
+    claimSalt: saltBytes,
   });
+
+  // Call claimPayout circuit with just the poolId argument
+  const result = await contract.callTx.claimPayout(BigInt(input.poolId));
 
   const txId = (result.txHash || result.txId) as string;
   const claimedCount = Number(result.public?.poolClaimedCount?.get(BigInt(input.poolId)) ?? 0);
