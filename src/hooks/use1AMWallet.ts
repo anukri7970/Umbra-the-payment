@@ -79,6 +79,7 @@ function discover1AMProvider(): InjectedWalletProvider | null {
   return null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function extractWalletCredentials(result: any) {
   let addr = "";
   let pubKey = "";
@@ -252,9 +253,10 @@ export function use1AMWallet() {
             if (typeof provider.enable === "function") {
               result = await provider.enable();
             }
-            let { addr, pubKey, encPubKey } = await extractWalletCredentials(result);
-            if (!addr) addr = localStorage.getItem(LS_ADDRESS) || "";
-            if (!pubKey) pubKey = localStorage.getItem(LS_PUBKEY) || "";
+            const extracted = await extractWalletCredentials(result);
+            const addr = extracted.addr || localStorage.getItem(LS_ADDRESS) || "";
+            const pubKey = extracted.pubKey || localStorage.getItem(LS_PUBKEY) || "";
+            const encPubKey = extracted.encPubKey;
             setAddress(addr);
             setCoinPublicKey(pubKey);
             setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
