@@ -14,6 +14,9 @@ export default defineConfig({
       ),
       // Polyfill isomorphic-ws for browser
       "isomorphic-ws": path.resolve(import.meta.dirname, "browser-ws-polyfill.js"),
+      "events": "events",
+      "assert": "assert",
+      "buffer": "buffer"
     },
   },
   server: { port: 5173 },
