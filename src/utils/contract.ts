@@ -260,11 +260,11 @@ export async function createPool(
   await providers.privateStateProvider.set(CONTRACT_ADDRESS, {
     poolTotal: BigInt(input.totalAmount),
     recipientShares: sharesAsU64,
-    recipientCount: input.shares.length,
+    recipientCount: BigInt(input.shares.length),
     commitSalt: saltBytes,
     callerSecretKey: new Uint8Array(32),
     claimShareAmount: 0n,
-    claimRecipientIndex: 0,
+    claimRecipientIndex: 0n,
     claimSalt: new Uint8Array(32),
   });
 
@@ -304,11 +304,11 @@ export async function claimPayout(
   await providers.privateStateProvider.set(CONTRACT_ADDRESS, {
     poolTotal: 0n,
     recipientShares: new Array(32).fill(0n),
-    recipientCount: 0,
+    recipientCount: 0n,
     commitSalt: new Uint8Array(32),
     callerSecretKey: new Uint8Array(32),
     claimShareAmount: BigInt(input.shareAmount),
-    claimRecipientIndex: input.recipientIndex,
+    claimRecipientIndex: BigInt(input.recipientIndex),
     claimSalt: saltBytes,
   });
 

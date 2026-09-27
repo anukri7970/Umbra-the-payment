@@ -18,10 +18,10 @@ export type UmbraPrivateState = {
   readonly callerSecretKey: Uint8Array; // 32-byte caller identity secret
   readonly poolTotal: bigint;
   readonly recipientShares: bigint[];    // up to 32 entries
-  readonly recipientCount: number;
+  readonly recipientCount: bigint;
   readonly commitSalt: Uint8Array;       // 32-byte random salt
   readonly claimShareAmount: bigint;
-  readonly claimRecipientIndex: number;
+  readonly claimRecipientIndex: bigint;
   readonly claimSalt: Uint8Array;        // 32-byte random salt
 };
 
@@ -29,10 +29,10 @@ export const createUmbraPrivateState = (overrides: Partial<UmbraPrivateState> = 
   callerSecretKey: new Uint8Array(32),
   poolTotal: 0n,
   recipientShares: Array(32).fill(0n),
-  recipientCount: 0,
+  recipientCount: 0n,
   commitSalt: new Uint8Array(32),
   claimShareAmount: 0n,
-  claimRecipientIndex: 0,
+  claimRecipientIndex: 0n,
   claimSalt: new Uint8Array(32),
   ...overrides,
 });
@@ -44,7 +44,7 @@ export const witnesses = {
   recipientShares: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, bigint[]] =>
     [privateState, privateState.recipientShares],
 
-  recipientCountWitness: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, number] =>
+  recipientCountWitness: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, bigint] =>
     [privateState, privateState.recipientCount],
 
   commitSalt: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, Uint8Array] =>
@@ -56,7 +56,7 @@ export const witnesses = {
   claimShareAmount: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, bigint] =>
     [privateState, privateState.claimShareAmount],
 
-  claimRecipientIndex: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, number] =>
+  claimRecipientIndex: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, bigint] =>
     [privateState, privateState.claimRecipientIndex],
 
   claimSalt: ({ privateState }: WitnessContext<any, UmbraPrivateState>): [UmbraPrivateState, Uint8Array] =>
