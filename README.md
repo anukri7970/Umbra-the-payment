@@ -4,7 +4,10 @@
 
 > Confidential payroll and revenue splits: prove every share adds up, without ever showing who got what.
 
+## Live Demo & Walkthrough
 
+* 🌐 **Live DApp:** [https://umbra-the-payment.vercel.app](https://umbra-the-payment.vercel.app)
+* 🎥 **Video Walkthrough:** [Watch the demo on Google Drive](https://drive.google.com/file/d/1HitWlEBr3wZ0YimV3IULD8aNofJOe42N/view?usp=sharing)
 
 ## Contract Address
 
