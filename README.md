@@ -74,7 +74,8 @@ sequenceDiagram
 
 ## Social Media handle links
 
-[PLACEHOLDER - Paste your X/Twitter Profile Link Here]
+- **X (Twitter) Profile:** [@umbraThePayment](https://x.com/umbraThePayment)
+- **Launch Thread:** [Read our launch announcement!](https://x.com/umbraThePayment/status/2104192068683727165)
 
 ---
 
