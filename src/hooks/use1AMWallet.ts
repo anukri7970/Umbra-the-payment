@@ -39,6 +39,7 @@ export type WalletStatus =
 
 export interface WalletApi {
   coinPublicKey: string;
+  encryptionPublicKey: string;
   address: string;
   provider: InjectedWalletProvider | InjectedConnectionResult;
 }
@@ -155,9 +156,10 @@ export function use1AMWallet() {
         throw new Error("1AM wallet has no enable() or connect() method");
       }
 
-      // Extract address + coinPublicKey from result
+      // Extract address + coinPublicKey + encryptionPublicKey from result
       let addr = "";
       let pubKey = "";
+      let encPubKey = "";
 
       // Standard Midnight ConnectedAPI (Nightly / Lace / 1AM)
       if (typeof result.getUnshieldedAddress === "function") {
@@ -168,6 +170,7 @@ export function use1AMWallet() {
       if (typeof result.getShieldedAddresses === "function") {
         const shielded = await result.getShieldedAddresses();
         pubKey = shielded.shieldedCoinPublicKey || "";
+        encPubKey = shielded.shieldedEncryptionPublicKey || "";
       }
 
       // Legacy fallbacks (in case of older wallet specs)
@@ -181,6 +184,12 @@ export function use1AMWallet() {
       if (!pubKey && typeof result.getPublicKeys === "function") {
         const keys = await result.getPublicKeys();
         pubKey = keys.coinPublicKey || "";
+        encPubKey = keys.encryptionPublicKey || "";
+      }
+
+      // Direct properties fallback
+      if (!encPubKey) {
+        encPubKey = result.encryptionPublicKey as string || "";
       }
 
       if (!addr && pubKey) {
@@ -194,7 +203,7 @@ export function use1AMWallet() {
 
       setAddress(addr);
       setCoinPublicKey(pubKey);
-      setWalletApi({ coinPublicKey: pubKey, address: addr, provider: result });
+      setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
       setStatus("connected");
       persistSession(addr, pubKey);
     } catch (err) {
@@ -251,9 +260,10 @@ export function use1AMWallet() {
             }
             const addr = result.address || result.state?.address || localStorage.getItem(LS_ADDRESS) || "";
             const pubKey = result.coinPublicKey || localStorage.getItem(LS_PUBKEY) || "";
+            const encPubKey = result.encryptionPublicKey as string || "";
             setAddress(addr);
             setCoinPublicKey(pubKey);
-            setWalletApi({ coinPublicKey: pubKey, address: addr, provider: result });
+            setWalletApi({ coinPublicKey: pubKey, encryptionPublicKey: encPubKey, address: addr, provider: result });
             setStatus("connected");
           } catch {
             // Silently fail — user will see disconnected state and can reconnect manually

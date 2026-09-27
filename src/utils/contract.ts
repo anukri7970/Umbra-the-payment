@@ -182,7 +182,7 @@ async function getMidnightProviders(walletApi: any) {
 
   const walletProvider = {
     getCoinPublicKey: () => coinPublicKey,
-    getEncryptionPublicKey: () => coinPublicKey, // Fallback to coin pubkey to prevent length 0 crash
+    getEncryptionPublicKey: () => walletApi.encryptionPublicKey,
     balanceTx: async (tx: any): Promise<any> => {
       const serializedTx = toHex(tx.serialize());
       const received = await provider.balanceUnsealedTransaction(serializedTx);
