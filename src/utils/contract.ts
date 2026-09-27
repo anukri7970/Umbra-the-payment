@@ -48,14 +48,15 @@ const CONTRACT_ADDRESS = (import.meta as any).env?.MODE === "test" ? "" : (impor
 export const RUNTIME_MODE: "local" | "network" = CONTRACT_ADDRESS ? "network" : "local";
 
 // Explorer helpers
-export function explorerTxUrl(txId: string): string {
+export function explorerTxUrl(txId: string | undefined): string {
+  if (!txId) return "";
   const clean = txId.replace(/^0x/, "");
   return `https://explorer.1am.xyz/tx/${clean}?network=preprod`;
 }
 export function explorerContractUrl(): string {
   return `https://preprod.midnight.network/contract/${CONTRACT_ADDRESS}`;
 }
-export function truncateHash(hash: string): string {
+export function truncateHash(hash: string | undefined): string {
   if (!hash) return "—";
   return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
 }
