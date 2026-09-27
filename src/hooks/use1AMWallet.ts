@@ -198,6 +198,7 @@ export function use1AMWallet() {
       }
 
       if (!result || Object.keys(result).length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         result = provider as any;
       }
 
@@ -266,6 +267,7 @@ export function use1AMWallet() {
               result = await provider.enable();
             }
             if (!result || Object.keys(result).length === 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               result = provider as any;
             }
             const extracted = await extractWalletCredentials(result);
