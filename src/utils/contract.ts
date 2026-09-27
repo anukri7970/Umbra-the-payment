@@ -169,18 +169,32 @@ async function getMidnightProviders(walletApi: any) {
 
   const publicDataProvider = indexerPublicDataProvider(PREPROD_INDEXER_HTTP, PREPROD_INDEXER_WS);
 
-  const shieldedAddresses = await walletApi.getShieldedAddresses();
+  // Safely retrieve public keys (supporting both new standard and legacy 1AM wallet formats)
+  let coinPublicKey = "";
+  let encryptionPublicKey = "";
+  if (typeof walletApi.getShieldedAddresses === "function") {
+    const shielded = await walletApi.getShieldedAddresses();
+    coinPublicKey = shielded.shieldedCoinPublicKey || "";
+    encryptionPublicKey = shielded.shieldedEncryptionPublicKey || "";
+  } else if (typeof walletApi.getPublicKeys === "function") {
+    const keys = await walletApi.getPublicKeys();
+    coinPublicKey = keys.coinPublicKey || "";
+    encryptionPublicKey = keys.encryptionPublicKey || "";
+  } else {
+    coinPublicKey = walletApi.coinPublicKey || "";
+    encryptionPublicKey = walletApi.encryptionPublicKey || "";
+  }
 
   const privateStateProvider = levelPrivateStateProvider({
     privateStateStoreName: "umbra-private-state",
     signingKeyStoreName: "umbra-private-state-signing-keys",
     privateStoragePasswordProvider: () => "TempPassword123!Secure",
-    accountId: shieldedAddresses.shieldedCoinPublicKey ?? "umbra-user",
+    accountId: coinPublicKey || "umbra-user",
   });
 
   const walletProvider = {
-    getCoinPublicKey: () => shieldedAddresses.shieldedCoinPublicKey,
-    getEncryptionPublicKey: () => shieldedAddresses.shieldedEncryptionPublicKey,
+    getCoinPublicKey: () => coinPublicKey,
+    getEncryptionPublicKey: () => encryptionPublicKey,
     balanceTx: async (tx: any): Promise<any> => {
       const serializedTx = toHex(tx.serialize());
       const received = await walletApi.balanceUnsealedTransaction(serializedTx);
