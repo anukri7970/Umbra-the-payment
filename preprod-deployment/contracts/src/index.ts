@@ -4,21 +4,26 @@
 
 import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-js";
 
-// (Removed export * to prevent Rollup hoisting issues)
-
-import { Contract } from "./managed/bboard/contract/index.js";
-import { witnesses } from "./witnesses.js";
-
-class ContractWrapper extends Contract<any, any> {
-  constructor() {
-    super(witnesses);
+export async function getCompiledUmbraPayrollContract() {
+  const contractModule = await import("./managed/bboard/contract/index.js");
+  const ContractClass = contractModule.Contract || (contractModule as any).default?.Contract;
+  
+  if (!ContractClass) {
+    throw new Error("Failed to resolve Contract class from generated bindings");
   }
-}
 
-// The compiled Umbra Payroll contract, ready for deployContract() / findDeployedContract()
-export const CompiledUmbraPayrollContract = CompiledContract.make(
-  "bboard",
-  ContractWrapper as any
-).pipe(
-  CompiledContract.withCompiledFileAssets("./managed/bboard")
-) as any;
+  const witnessesModule = await import("./witnesses.js");
+
+  class DynamicContractWrapper extends ContractClass {
+    constructor() {
+      super(witnessesModule.witnesses as any);
+    }
+  }
+
+  return CompiledContract.make(
+    "bboard",
+    DynamicContractWrapper as any
+  ).pipe(
+    CompiledContract.withCompiledFileAssets("/managed/bboard") // fetch from public/ at runtime
+  ) as any;
+}

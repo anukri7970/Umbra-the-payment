@@ -12,7 +12,7 @@
 // Explorer TX URL: https://explorer.1am.xyz/tx/${txId}?network=preprod
 // ---------------------------------------------------------------------------
 
-import { CompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/index.js";
+import { getCompiledUmbraPayrollContract } from "../../preprod-deployment/contracts/src/index.js";
 
 export type PoolSummary = {
   poolId: number;
@@ -186,9 +186,11 @@ async function getDeployedContract(walletProvider: any) {
   const { findDeployedContract } = await import("@midnight-ntwrk/midnight-js-contracts");
   const providers = await getMidnightProviders(walletProvider);
 
+  const compiledContract = await getCompiledUmbraPayrollContract();
+
   return findDeployedContract(providers, {
     contractAddress: CONTRACT_ADDRESS,
-    compiledContract: CompiledUmbraPayrollContract,
+    compiledContract,
   });
 }
 

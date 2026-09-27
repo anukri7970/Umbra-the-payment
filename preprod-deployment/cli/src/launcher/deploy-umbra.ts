@@ -11,7 +11,7 @@ import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-p
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { CompiledUmbraPayrollContract } from '@midnight-ntwrk/umbra-contract';
+import { getCompiledUmbraPayrollContract } from '@midnight-ntwrk/umbra-contract';
 import { createLogger } from '../logger-utils.js';
 import { getUnshieldedAddress } from '../wallet-utils.js';
 import { generateDust } from '../generate-dust.js';
@@ -154,9 +154,11 @@ async function main() {
   console.log('Deploying Umbra Payroll contract...');
   let success = false;
   try {
+    const compiledContract = await getCompiledUmbraPayrollContract();
+    
     // Umbra payroll constructor takes no arguments — pool state starts at 0
     const deployed = await deployContract(providers, {
-      compiledContract: CompiledUmbraPayrollContract,
+      compiledContract,
       args: [],
     });
 
