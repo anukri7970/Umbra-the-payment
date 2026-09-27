@@ -189,7 +189,7 @@ async function getDeployedContract(walletProvider: any) {
   const providers = await getMidnightProviders(walletProvider);
 
   // Dynamic import through Vite alias — bypasses Rollup static analysis completely
-  // @ts-ignore
+  // @ts-expect-error - Vite dynamic import alias workaround
   const contractMod = await import(/* @vite-ignore */ "@midnight-ntwrk/umbra-contract");
   const compiledContract = contractMod.CompiledUmbraPayrollContract;
 
