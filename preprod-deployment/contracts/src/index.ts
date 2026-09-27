@@ -4,8 +4,7 @@
 
 import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-js";
 
-export * from "./managed/bboard/contract/index.js";
-export * from "./witnesses.js";
+// (Removed export * to prevent Rollup hoisting issues)
 
 import { Contract } from "./managed/bboard/contract/index.js";
 import { witnesses } from "./witnesses.js";
