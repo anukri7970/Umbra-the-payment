@@ -169,21 +169,9 @@ async function getMidnightProviders(walletApi: any) {
 
   const publicDataProvider = indexerPublicDataProvider(PREPROD_INDEXER_HTTP, PREPROD_INDEXER_WS);
 
-  // Safely retrieve public keys (supporting both new standard and legacy 1AM wallet formats)
-  let coinPublicKey = "";
-  let encryptionPublicKey = "";
-  if (typeof walletApi.getShieldedAddresses === "function") {
-    const shielded = await walletApi.getShieldedAddresses();
-    coinPublicKey = shielded.shieldedCoinPublicKey || "";
-    encryptionPublicKey = shielded.shieldedEncryptionPublicKey || "";
-  } else if (typeof walletApi.getPublicKeys === "function") {
-    const keys = await walletApi.getPublicKeys();
-    coinPublicKey = keys.coinPublicKey || "";
-    encryptionPublicKey = keys.encryptionPublicKey || "";
-  } else {
-    coinPublicKey = walletApi.coinPublicKey || "";
-    encryptionPublicKey = walletApi.encryptionPublicKey || "";
-  }
+  // Safely use the already-resolved coinPublicKey from the use1AMWallet wrapper
+  const coinPublicKey = walletApi.coinPublicKey || "";
+  const provider = walletApi.provider;
 
   const privateStateProvider = levelPrivateStateProvider({
     privateStateStoreName: "umbra-private-state",
@@ -194,10 +182,10 @@ async function getMidnightProviders(walletApi: any) {
 
   const walletProvider = {
     getCoinPublicKey: () => coinPublicKey,
-    getEncryptionPublicKey: () => encryptionPublicKey || coinPublicKey, // Fallback to coin pubkey to prevent length 0 crash
+    getEncryptionPublicKey: () => coinPublicKey, // Fallback to coin pubkey to prevent length 0 crash
     balanceTx: async (tx: any): Promise<any> => {
       const serializedTx = toHex(tx.serialize());
-      const received = await walletApi.balanceUnsealedTransaction(serializedTx);
+      const received = await provider.balanceUnsealedTransaction(serializedTx);
       return Transaction.deserialize("signature", "proof", "binding", fromHex(received.tx)) as any;
     },
   } as any;
@@ -205,7 +193,7 @@ async function getMidnightProviders(walletApi: any) {
   const midnightProvider = {
     submitTx: async (tx: any): Promise<string> => {
       const serializedTx = toHex(tx.serialize());
-      await walletApi.submitTransaction(serializedTx);
+      await provider.submitTransaction(serializedTx);
       const txIdentifiers = tx.identifiers();
       return txIdentifiers[0];
     }

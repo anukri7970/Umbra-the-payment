@@ -36,7 +36,7 @@ export function useMidnight() {
         const summary = await createPoolCall(
           input,
           wallet.address ?? wallet.coinPublicKey ?? "unknown",
-          wallet.walletApi?.provider
+          wallet.walletApi
         );
         if (summary.txId) {
           setLastTxId(summary.txId);
@@ -66,7 +66,7 @@ export function useMidnight() {
         const summary = await claimPayoutCall(
           input,
           wallet.address ?? wallet.coinPublicKey ?? "unknown",
-          wallet.walletApi?.provider
+          wallet.walletApi
         );
         if (summary.txId) {
           setLastTxId(summary.txId);
