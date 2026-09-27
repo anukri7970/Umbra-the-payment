@@ -1,6 +1,6 @@
 # Umbra (Project Title)
 
-![CI](https://github.com/YOUR_GITHUB_USERNAME/umbra-payroll/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/anukri7970/Umbra-the-payment/actions/workflows/ci.yml/badge.svg)
 
 > Confidential payroll and revenue splits: prove every share adds up, without ever showing who got what.
 
