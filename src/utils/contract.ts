@@ -41,7 +41,7 @@ const PREPROD_INDEXER_HTTP  = "https://indexer.preprod.midnight.network/api/v4/g
 const PREPROD_INDEXER_WS    = "wss://indexer.preprod.midnight.network/api/v4/graphql/ws";
 // CRITICAL: Use 1AM ProofStation — avoids Error 182 with default proof server
 const ONEAM_PROOF_SERVER    = "https://api-preprod.1am.xyz";
-const CONTRACT_ADDRESS      = import.meta.env.VITE_CONTRACT_ADDRESS ?? "";
+const CONTRACT_ADDRESS = (import.meta as any).env?.MODE === "test" ? "" : (import.meta.env.VITE_CONTRACT_ADDRESS ?? "");
 
 export const RUNTIME_MODE: "local" | "network" = CONTRACT_ADDRESS ? "network" : "local";
 
