@@ -197,11 +197,6 @@ export function use1AMWallet() {
         throw new Error("1AM wallet has no enable() or connect() method");
       }
 
-      if (!result || Object.keys(result).length === 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        result = provider as any;
-      }
-
       const { addr, pubKey, encPubKey } = await extractWalletCredentials(result);
 
       if (!addr) {
@@ -266,10 +261,7 @@ export function use1AMWallet() {
             if (typeof provider.enable === "function") {
               result = await provider.enable();
             }
-            if (!result || Object.keys(result).length === 0) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              result = provider as any;
-            }
+
             const extracted = await extractWalletCredentials(result);
             const addr = extracted.addr || localStorage.getItem(LS_ADDRESS) || "";
             const pubKey = extracted.pubKey || localStorage.getItem(LS_PUBKEY) || "";
