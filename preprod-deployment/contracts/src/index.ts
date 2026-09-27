@@ -14,11 +14,11 @@ export async function getCompiledUmbraPayrollContract() {
 
   const witnessesModule = await import("./witnesses.js");
 
-  class DynamicContractWrapper extends ContractClass {
+  const DynamicContractWrapper = class extends ContractClass {
     constructor() {
       super(witnessesModule.witnesses as any);
     }
-  }
+  };
 
   return CompiledContract.make(
     "bboard",
