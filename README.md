@@ -13,6 +13,9 @@
 | Network | Address |
 | Preprod | `4e73af2c0626a1d17de2452dc11e80a0f285bdb25fe88e82d5b8b2a8fa87d5e0` |
 
+**Example Transaction (1AM Explorer)**
+[9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a](https://explorer.1am.xyz/tx/9be7773f4ac661a799352325c6524dbff7807cae4dc4207c17aa3fc23ea5dd8a?network=preprod)
+
 ## What This Product Does
 
 Umbra is a confidential payroll and revenue-split dApp built on Midnight.
